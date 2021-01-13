@@ -6,7 +6,7 @@ if (workbox) {
   and config in the sw-config.js file
   */
   workbox.routing.registerRoute(
-      /(.*)others(.*)\.(?:png|gif|jpg)/,
+      /(.*)profile(.*)\.(?:png|gif|jpg)/,
       new workbox.strategies.CacheFirst({
           cacheName: "images",
           plugins: [
@@ -17,7 +17,7 @@ if (workbox) {
           ]
       })
   );
-  /* Make your JS and CSS âš¡ fast by returning the assets from the cache,
+  /* Make your JS and CSS fast by returning the assets from the cache,
   while making sure they are updated in the background for the next use.
   */
   workbox.routing.registerRoute(
@@ -46,8 +46,19 @@ if (workbox) {
 /* Install a new service worker and have it update
 and control a web page as soon as possible
 */
-workbox.core.skipWaiting();
+self.skipWaiting();
   workbox.core.clientsClaim();
 } else {
   console.log("Error: Workbox failed to load.");
 }
+
+self.addEventListener('fetch', (evt) => {
+    evt.respondWith(
+        caches.open('images').then(cache => {
+            return cache.match(evt.request).then(cacheResponse => cacheResponse || fetch(evt.request).then(networkResponse => {
+                cache.put(evt.request, networkResponse.clone());
+                return networkResponse;
+            }));
+        })
+    )
+});
